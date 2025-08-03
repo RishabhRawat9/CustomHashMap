@@ -6,14 +6,18 @@ public class Main {
 
         Jmap<Integer, Integer> map = new Jmap<>();
         Random r = new Random(42);
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 12; i++) {
             int key = r.nextInt(10000);
             map.put(key, i);
         }
 
+        map.put(13, 133);
+        System.out.println(map.get(13));
         System.out.println(map);
+        map.remove(13);
+        System.out.println(map.get(13));
 
-        Jnode<Integer,Integer> getValue = map.get(1911);
-        System.out.println(getValue);
+
+
     }
 }

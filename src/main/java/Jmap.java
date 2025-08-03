@@ -26,6 +26,32 @@ public class Jmap<K, V> {
         return hashValue;
     }
 
+    public void remove(K key) {
+        int tableIndex = hashFunction(key, size);
+        Jnode<K, V> current = table[tableIndex];
+        Jnode<K, V> prev = null;
+
+        if (current == null) {
+            throw new IllegalArgumentException("Key not found: " + key);
+        }
+
+        while (current != null && !current.key.equals(key)) {
+            prev = current;
+            current = current.next;
+        }
+
+        if (current == null) {
+            throw new IllegalArgumentException("Key not found: " + key);
+        }
+
+        if (prev == null) {//if it's the first node only;;
+            table[tableIndex] = current.next;
+        } else {
+            prev.next = current.next; // deleted the curr one gc removes it;
+        }
+        node_ct--;
+    }
+
     public void put(K key, V value) {
         int tableIndex = hashFunction(key, size);
         boolean newNodePlaced = false;
