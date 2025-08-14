@@ -127,7 +127,7 @@ public class Jmap<K, V> {
     }
 
 
-    public Jnode<K, V> get(K key) {
+    public V get(K key) {
         //ab mujhe is key ka hashvalue chaiye
         int tableIndex = hashFunction(key, size);
         //now i can search for this key in my table;
@@ -137,7 +137,7 @@ public class Jmap<K, V> {
         while (value != null) {
             //check each nodes key.equals();
             if (value.key.equals(key)) {
-                return value;
+                return value.value;
             } else {
                 value = value.next;
             }
