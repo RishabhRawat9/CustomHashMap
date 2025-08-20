@@ -2,6 +2,9 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class KVStore {
 
@@ -14,9 +17,43 @@ public class KVStore {
         //and store all the updates to the log file;
 
         //in the log file writing as base64 encoding but in memory they are raw bytes only;
-        fillStore();
+//        fillStore();
 
+        //for now keeping two modes testing and interactive;
+        int threadCount = 2;
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            int threadId = i;
+            executor.submit(() -> {
+                try {
+                    for(int j=0;j<10;j++){
+                        String key = "key" + threadId+j;
+                        String value = "value" + threadId+j;
+
+                        kvStore.put(key, value.getBytes());
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        try {
+            latch.await(); // Wait for all threads to finish
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        executor.shutdown();
+        System.out.println("All threads completed. size: " + Jmap.node_ct.get());
         System.out.println(kvStore);
+
+    }
+
+
+    public void interactiveMode() {
 
         Scanner scanner = new Scanner(System.in);
 
@@ -68,7 +105,8 @@ public class KVStore {
 
     }
 
-    public static void fillStore(){
+
+    public static void fillStore() {
         try {
             logWriter = new PrintWriter(new FileWriter("src/main/logs/logs.txt", true));
             logReader = new BufferedReader(new FileReader("src/main/logs/logs.txt"));
@@ -76,17 +114,17 @@ public class KVStore {
             //1. read the file line by line;
             //2. parse the instructions decode them to simple strings -> perform the operation on the store;
             String log_instruction;
-            while(true){
+            while (true) {
                 log_instruction = logReader.readLine();
                 System.out.println(log_instruction);
-                if(log_instruction == null){
+                if (log_instruction == null) {
                     break;
                 }
                 //it'll either be a put(2args) or delete(1 arg)
                 String[] instruction_args = log_instruction.split(" ");
                 String instruction = instruction_args[0];
-                switch(instruction.trim()){
-                    case "PUT:"->{
+                switch (instruction.trim()) {
+                    case "PUT:" -> {
                         //two args;
                         String key = instruction_args[1];//base64 encoded
                         byte[] byte_key = Base64.getDecoder().decode(key);
@@ -95,14 +133,13 @@ public class KVStore {
 
                         kvStore.put(new String(byte_key), byte_value);
                     }
-                    case "DELETE:"->{
+                    case "DELETE:" -> {
                         String key = instruction_args[1];//base64 encoded
                         byte[] byte_key = Base64.getDecoder().decode(key);
                         kvStore.remove(new String(byte_key));
                     }
                 }
             }
-
         } catch (IOException e) {
             System.exit(1);
         }

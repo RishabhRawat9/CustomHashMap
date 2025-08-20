@@ -1,4 +1,4 @@
-
+import java.nio.charset.StandardCharsets;
 
 public class Jnode <K, V>{
     public int hash;
@@ -16,7 +16,8 @@ public class Jnode <K, V>{
     @Override
     public String toString(){
 
-        String content = String.format("(%s, %s)", key, value);
+        String val = new String((byte[]) value, StandardCharsets.UTF_8);
+        String content = String.format("(%s, %s)", key, val);
         return content;
 
     }
