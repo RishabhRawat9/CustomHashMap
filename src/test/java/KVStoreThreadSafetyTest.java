@@ -1,59 +1,76 @@
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import org.junit.jupiter.api.Test;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.concurrent.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class KVStoreThreadSafetyTest {
 
     public static void main(String[] args) {
-        Jmap<String, String> jmap = new Jmap<>();
-        ConcurrentHashMap<String, String> concurrentMap = new ConcurrentHashMap<>();
-        int threadCount = 40;
-        CountDownLatch latch = new CountDownLatch(threadCount);
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 
-        for (int i = 0; i < threadCount; i++) {
-            int threadId = i;
+    }
+    @Test
+    void testConcurrentPuts() throws InterruptedException {
+        Jmap<String,byte[]> store = new Jmap<>();
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+
+        int numTasks = 100;
+        CountDownLatch latch = new CountDownLatch(numTasks);
+
+        for (int i = 0; i < numTasks; i++) {
+            final int id = i;
             executor.submit(() -> {
-                try {
-                    String key = "key" + (threadId % 5); // Simulate key collisions
-                    String value = "value" + threadId;
-
-                    // Perform PUT operation
-                    jmap.put(key, value);
-                    concurrentMap.put(key, value);
-
-                    // Perform GET operation
-                    String jmapValue = jmap.get(key);
-                    String concurrentMapValue = concurrentMap.get(key);
-
-                    if (!value.equals(jmapValue) || !value.equals(concurrentMapValue)) {
-                        System.err.printf("Mismatch detected! Key: %s, Expected: %s, Jmap: %s, ConcurrentMap: %s%n",
-                                key, value, jmapValue, concurrentMapValue);
-                    }
-
-                    // Perform REMOVE operation
-                    jmap.remove(key);
-                    concurrentMap.remove(key);
-                } catch (Exception e) {
-                    System.err.println("Error in thread " + threadId + ": " + e.getMessage());
-                } finally {
-                    latch.countDown();
-                }
+                store.put("key" + id, ("value" + id).getBytes());
+                latch.countDown();
             });
         }
 
-        try {
-            latch.await(); // Wait for all threads to finish
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        latch.await(); // wait for all threads to finish
+        executor.shutdown();
+
+        for (int i = 0; i < numTasks; i++) {
+            byte[] arr = store.get("key"+i);
+
+            if(arr!=null){
+                String str = new String(arr, StandardCharsets.UTF_8);
+                assertEquals("value" + i, str);
+            }
+            else{
+                System.out.println("null");
+            }
         }
 
+        System.out.println(store);
+    }
+
+    @Test
+    void testConcurrentReadWriteSameKey() throws InterruptedException {
+        Jmap<String,byte[]> store = new Jmap<>();
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        store.put("foo", ("init").getBytes());
+
+        Runnable writer = () -> {
+            for (int i = 0; i < 1000; i++) {
+                store.put("foo", ("val" + i).getBytes());
+            }
+        };
+
+        Runnable reader = () -> {
+            for (int i = 0; i < 1000; i++) {
+                String v = new String(store.get("foo"));
+            }
+            assertEquals("init", new String(store.get("foo")));
+        };
+
+        executor.submit(writer);
+        executor.submit(reader);
+
         executor.shutdown();
-        System.out.println("All threads completed.");
-        System.out.println("Final Jmap state:");
-        System.out.println(jmap);
-        System.out.println("Final ConcurrentHashMap state:");
-        System.out.println(concurrentMap);
+        executor.awaitTermination(5, TimeUnit.SECONDS);
+        System.out.println(store);
     }
 }

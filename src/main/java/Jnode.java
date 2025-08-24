@@ -1,4 +1,5 @@
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public class Jnode <K, V>{
     public int hash;
@@ -22,6 +23,17 @@ public class Jnode <K, V>{
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        Jnode<K,V> node = (Jnode<K,V>)o;
+        String o_key = (String) node.key;
+        String this_key = (String) this.key;
+        if(o_key.equals(this_key)){
+            return true;
+        }
+        return false;
+
+    }
 
 
 }

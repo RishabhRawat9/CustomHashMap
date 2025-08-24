@@ -1,6 +1,7 @@
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -20,20 +21,17 @@ public class KVStore {
 //        fillStore();
 
         //for now keeping two modes testing and interactive;
-        int threadCount = 2;
+        int threadCount = 90;
         CountDownLatch latch = new CountDownLatch(threadCount);
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-
         for (int i = 0; i < threadCount; i++) {
             int threadId = i;
             executor.submit(() -> {
                 try {
-                    for(int j=0;j<10;j++){
-                        String key = "key" + threadId+j;
-                        String value = "value" + threadId+j;
+                    String key = "key" + threadId;
+                    String value = "value" + threadId;
+                    kvStore.put(key, value.getBytes());
 
-                        kvStore.put(key, value.getBytes());
-                    }
                 } finally {
                     latch.countDown();
                 }
@@ -47,7 +45,7 @@ public class KVStore {
         }
 
         executor.shutdown();
-        System.out.println("All threads completed. size: " + Jmap.node_ct.get());
+        System.out.println("All threads completed. size: " + Jmap.node_ct.get() + " <- noddees");
         System.out.println(kvStore);
 
     }
