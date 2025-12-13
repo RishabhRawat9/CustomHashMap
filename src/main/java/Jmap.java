@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Jmap<K, V> {
     private Jnode<K, V>[] table;
     private final AtomicInteger size = new AtomicInteger(16);
-    private float resize_threshold = 0.85f;//so when 85% of the capacity is filled i resize the thing right;
+    private float resize_threshold = 0.75f;//so when 85% of the capacity is filled i resize the thing right;
     private Object[] bucketLocks;
 
     private final AtomicBoolean isResizing = new AtomicBoolean(false);

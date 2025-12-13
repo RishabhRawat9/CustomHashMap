@@ -13,14 +13,20 @@ public class KVStore {
     private static PrintWriter logWriter;
     private static BufferedReader logReader;
 
+    //right now every put, del goes to the log but log can bloat so need to compact it by frequently checking if dup enries so invalid entries are there or not.
+
     public static void main(String[] args) {
         //now before doing this we gotta build the kvStore from the log file;
         //and store all the updates to the log file;
 
         //in the log file writing as base64 encoding but in memory they are raw bytes only;
-//        fillStore();
+        fillStore();
+        interactiveMode();
 
-        //for now keeping two modes testing and interactive;
+
+    }
+
+    public static  void multithreadingTest(){
         int threadCount = 90;
         CountDownLatch latch = new CountDownLatch(threadCount);
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -47,11 +53,11 @@ public class KVStore {
         executor.shutdown();
         System.out.println("All threads completed. size: " + Jmap.node_ct.get() + " <- noddees");
         System.out.println(kvStore);
-
     }
 
 
-    public void interactiveMode() {
+
+    public static void interactiveMode() {
 
         Scanner scanner = new Scanner(System.in);
 
