@@ -13,21 +13,22 @@ public class KVStore {
     private static PrintWriter logWriter;
     private static BufferedReader logReader;
 
-    //right now every put, del goes to the log but log can bloat so need to compact it by frequently checking if dup enries so invalid entries are there or not.
+    // right now every put, del goes to the log but log can bloat so need to compact
+    // it by frequently checking if dup enries so invalid entries are there or not.
 
     public static void main(String[] args) {
-        //now before doing this we gotta build the kvStore from the log file;
-        //and store all the updates to the log file;
+        // now before doing this we gotta build the kvStore from the log file;
+        // and store all the updates to the log file;
 
-        //in the log file writing as base64 encoding but in memory they are raw bytes only;
+        // in the log file writing as base64 encoding but in memory they are raw bytes
+        // only;
         fillStore();
-        interactiveMode();
-
+        multithreadingTest();
 
     }
 
-    public static  void multithreadingTest(){
-        int threadCount = 90;
+    public static void multithreadingTest() {
+        int threadCount = 20;
         CountDownLatch latch = new CountDownLatch(threadCount);
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         for (int i = 0; i < threadCount; i++) {
@@ -55,14 +56,12 @@ public class KVStore {
         System.out.println(kvStore);
     }
 
-
-
     public static void interactiveMode() {
 
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
-            System.out.print("> ");
+            System.out.print("Jmap> ");
             String command = scanner.nextLine().trim();
             switch (command.toUpperCase()) {
                 case "PUT" -> {
@@ -70,8 +69,10 @@ public class KVStore {
                     String key = scanner.nextLine().trim();
                     System.out.print("------enter value: ");
                     String value = scanner.nextLine().trim();
-                    logWriter.printf("PUT: %s %s%n", Base64.getEncoder().encodeToString(key.getBytes()), Base64.getEncoder().encodeToString(value.getBytes()));
-                    //see here the value for the key can be complex so rather than jsut getting the 3rd arg get everything after the third arg and make it
+                    logWriter.printf("PUT: %s %s%n", Base64.getEncoder().encodeToString(key.getBytes()),
+                            Base64.getEncoder().encodeToString(value.getBytes()));
+                    // see here the value for the key can be complex so rather than jsut getting the
+                    // 3rd arg get everything after the third arg and make it
                     logWriter.flush();
                     kvStore.put(key, value.getBytes());
                     System.out.println("OK");
@@ -109,14 +110,15 @@ public class KVStore {
 
     }
 
-
     public static void fillStore() {
         try {
             logWriter = new PrintWriter(new FileWriter("src/main/logs/logs.txt", true));
             logReader = new BufferedReader(new FileReader("src/main/logs/logs.txt"));
-            //now try to build the store from the logs;//the value in the logs are in base64 encoding so decode first and then store ;
-            //1. read the file line by line;
-            //2. parse the instructions decode them to simple strings -> perform the operation on the store;
+            // now try to build the store from the logs;//the value in the logs are in
+            // base64 encoding so decode first and then store ;
+            // 1. read the file line by line;
+            // 2. parse the instructions decode them to simple strings -> perform the
+            // operation on the store;
             String log_instruction;
             while (true) {
                 log_instruction = logReader.readLine();
@@ -124,13 +126,13 @@ public class KVStore {
                 if (log_instruction == null) {
                     break;
                 }
-                //it'll either be a put(2args) or delete(1 arg)
+                // it'll either be a put(2args) or delete(1 arg)
                 String[] instruction_args = log_instruction.split(" ");
                 String instruction = instruction_args[0];
                 switch (instruction.trim()) {
                     case "PUT:" -> {
-                        //two args;
-                        String key = instruction_args[1];//base64 encoded
+                        // two args;
+                        String key = instruction_args[1];// base64 encoded
                         byte[] byte_key = Base64.getDecoder().decode(key);
                         String value = instruction_args[2];
                         byte[] byte_value = Base64.getDecoder().decode(value);
@@ -138,7 +140,7 @@ public class KVStore {
                         kvStore.put(new String(byte_key), byte_value);
                     }
                     case "DELETE:" -> {
-                        String key = instruction_args[1];//base64 encoded
+                        String key = instruction_args[1];// base64 encoded
                         byte[] byte_key = Base64.getDecoder().decode(key);
                         kvStore.remove(new String(byte_key));
                     }

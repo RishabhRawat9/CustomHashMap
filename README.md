@@ -14,3 +14,6 @@ This project is a custom implementation of a thread-safe HashMap in Java. It is 
 - `PUT`: To add a new key-value pair.
 - `GET`: To retrieve the value for a given key.
 - `DELETE`: To remove a key-value pair.
+
+
+mvn exec:java -Dexec.mainClass="KVStore"
